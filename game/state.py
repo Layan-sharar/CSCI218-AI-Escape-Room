@@ -23,6 +23,7 @@ class WorldState:
         self.door_unlocked = False
         self.puzzle_solved = False
         self.level_complete = False
+        self.dynamic_obstacles = set()
 
     @property
     def exit_open(self):
@@ -30,12 +31,14 @@ class WorldState:
         return self.door_unlocked and self.puzzle_solved
 
     def get_ai_grid(self):
-        """Give the AI a grid where walls and a locked door are blocked."""
+        """Give the AI a grid with walls, a locked door, and dynamic blocks."""
         grid = get_grid(self.level_id)
 
         if not self.door_unlocked:
             row, column = self.door_position
             grid[row][column] = 1
 
+        for row, column in self.dynamic_obstacles:
+            grid[row][column] = 1
+
         return grid
-    
