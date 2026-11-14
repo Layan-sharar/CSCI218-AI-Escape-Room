@@ -1,10 +1,10 @@
-"""Constraint satisfaction: variables, domains, constraints and backtracking search.
+"""Constraint satisfaction solver: variables, domains, rules and backtracking search.
 
-solve(csp) is plain backtracking. Two improvements can be switched on:
-  mrv=True               pick the variable with the fewest legal values first
-                         (ties broken by the most constraints on unassigned variables)
-  forward_checking=True  after each assignment, remove values from the domains of
-                         neighbouring variables and stop early if a domain empties
+solve(csp) is plain backtracking. Two extras can be turned on:
+  mrv=True               choose the variable with the fewest legal values first
+                                                (on a tie, the one in the most rules with unassigned variables)
+  forward_checking=True  after each choice, remove values that no longer work from the
+                                                other variables, and stop early if one of them has none left
 """
 
 import time
@@ -49,7 +49,7 @@ def solve(csp: CSP, mrv: bool = False, forward_checking: bool = False) -> SolveR
     assignment: dict = {}
 
     def consistent(var: str) -> bool:
-        """Every constraint on var whose variables are all assigned must hold."""
+        """Check every rule that involves var and has all of its variables assigned."""
         return all(
             c.check(*[assignment[v] for v in c.scope])
             for c in by_variable[var]
@@ -81,7 +81,7 @@ def solve(csp: CSP, mrv: bool = False, forward_checking: bool = False) -> SolveR
         return min(unassigned, key=key)
 
     def prune(c: Constraint, target: str, removed: list) -> None:
-        """Drop the values of target that break c, given every other variable in c is assigned."""
+        """Remove the values of target that would break rule c (its other variables are already assigned)."""
         for value in list(domains[target]):
             assignment[target] = value
             ok = c.check(*[assignment[v] for v in c.scope])
@@ -91,7 +91,7 @@ def solve(csp: CSP, mrv: bool = False, forward_checking: bool = False) -> SolveR
                 removed.append((target, value))
 
     def prune_neighbours(var: str) -> tuple:
-        """Forward checking. Returns (removed (variable, value) pairs, False if a domain emptied)."""
+        """Forward checking. Returns the removed (variable, value) pairs, and False if a variable ran out of values."""
         removed = []
         for c in by_variable[var]:
             open_vars = [v for v in c.scope if v not in assignment]

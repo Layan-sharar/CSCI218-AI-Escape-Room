@@ -1,9 +1,9 @@
-"""The switch-chamber puzzle: five coloured switches, six written rules, one answer.
+"""The switch puzzle: five coloured switches, six rules, one correct answer.
 
-Interface for the rest of the game:
-    result = solve_puzzle()          # PuzzleResult
-    result.solved                    # True/False, tells the world whether the door may open
-    result.settings                  # {"RED": True, ...} (True = ON), or None if unsolvable
+How the rest of the game uses it:
+    result = solve_puzzle()          # gives a PuzzleResult
+    result.solved                    # True or False: can the door open?
+    result.settings                  # {"RED": True, ...} (True means ON), or None if there is no answer
     result.stats                     # assignments, backtracks, runtime_seconds
 """
 
@@ -56,7 +56,7 @@ def default_puzzle() -> SwitchPuzzle:
 
 
 def impossible_puzzle() -> SwitchPuzzle:
-    """The same chamber with one extra rule that contradicts two others."""
+    """Same puzzle plus one extra rule that clashes with two of the others, so it has no answer."""
     return _build("Broken Chamber", _RULES + [_IMPOSSIBLE_EXTRA])
 
 
@@ -75,7 +75,7 @@ def solve_puzzle(
 
 
 def compare_strategies(puzzle: Optional[SwitchPuzzle] = None) -> dict:
-    """Run plain backtracking and each improvement on the same puzzle, for the experiment table."""
+    """Solve the same puzzle with plain search and with each improvement, so they can be compared."""
     puzzle = puzzle or default_puzzle()
     options = [(False, False), (True, False), (False, True), (True, True)]
     results = [solve_puzzle(puzzle, mrv=m, forward_checking=f) for m, f in options]
@@ -83,7 +83,7 @@ def compare_strategies(puzzle: Optional[SwitchPuzzle] = None) -> dict:
 
 
 def format_comparison(puzzle: Optional[SwitchPuzzle] = None) -> str:
-    """Markdown table of search effort per strategy, ready to paste into the report."""
+    """Make a table of the search effort for each strategy, to paste into the report."""
     rows = ["| Strategy | Solved | Assignments | Backtracks |", "|---|---|---|---|"]
     for name, result in compare_strategies(puzzle).items():
         s = result.stats

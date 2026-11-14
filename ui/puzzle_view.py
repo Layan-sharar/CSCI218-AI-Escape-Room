@@ -1,12 +1,12 @@
-"""Pygame panel for the switch puzzle.
+"""Pygame window that shows the switch puzzle being solved.
 
-The game calls:
+How the game uses it:
     view = PuzzleView(puzzle, solve_puzzle(puzzle))
-    view.apply_next()      # the agent flips the next switch to the solver's value
-    view.door_open         # True once every switch is applied and the puzzle was solved
-    view.draw(surface)     # surface should be SIZE
+    view.apply_next()      # flips the next switch to the value the solver chose
+    view.door_open         # True when all switches are set and the puzzle had a solution
+    view.draw(surface)     # the surface should be SIZE
 
-Run it on its own with `python -m ui.puzzle_view` (SPACE step, R reset, I impossible puzzle, ESC quit).
+To try it alone: python -m ui.puzzle_view (SPACE next switch, R reset, I impossible puzzle, ESC quit).
 """
 
 import pygame

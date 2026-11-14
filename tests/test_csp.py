@@ -32,7 +32,7 @@ def brute_force_solutions(csp):
     return found
 
 
-# ---- generic engine ----------------------------------------------------------
+# ---- tests for the solver on its own ----------------------------------------
 
 def two_colour_chain():
     return CSP(
@@ -122,7 +122,7 @@ def test_stats_are_recorded_for_every_run():
     assert result.stats.runtime_seconds >= 0
 
 
-# ---- the switch puzzle -------------------------------------------------------
+# ---- tests for the switch puzzle --------------------------------------------
 
 def test_puzzle_has_four_to_five_switches_and_written_rules():
     puzzle = default_puzzle()
@@ -182,7 +182,7 @@ def test_solve_puzzle_reports_not_solved_with_no_settings_for_the_impossible_puz
     assert result.settings is None
 
 
-# ---- plain versus improved search --------------------------------------------
+# ---- tests comparing plain and improved search ------------------------------
 
 def test_improved_search_makes_fewer_assignments_than_plain_backtracking():
     puzzle = default_puzzle()
@@ -230,7 +230,7 @@ def test_forward_checking_alone_makes_fewer_assignments_than_plain_backtracking(
 
 
 def doomed_csp_with_unrelated_variables_in_the_middle():
-    """A and B can never agree, but C and D are listed between them and are irrelevant."""
+    """A and B can never both be satisfied, and C and D sit between them but do not matter."""
     return CSP(
         variables=["A", "C", "D", "B"],
         domains={"A": [1], "C": [1, 2, 3], "D": [1, 2, 3], "B": [1]},
