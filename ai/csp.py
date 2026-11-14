@@ -2,9 +2,9 @@
 
 solve(csp) is plain backtracking. Two extras can be turned on:
   mrv=True               choose the variable with the fewest legal values first
-                                                (on a tie, the one in the most rules with unassigned variables)
+                         (on a tie, the one in the most rules with unassigned variables)
   forward_checking=True  after each choice, remove values that no longer work from the
-                                                other variables, and stop early if one of them has none left
+                         other variables, and stop early if one of them has none left
 """
 
 import time
