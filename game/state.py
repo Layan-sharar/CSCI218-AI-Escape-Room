@@ -1,4 +1,4 @@
-from game.levels import get_grid, get_level
+from game.levels import get_grid, get_level, get_static_blocked_cells
 
 
 class WorldState:
@@ -31,11 +31,14 @@ class WorldState:
         return self.door_unlocked and self.puzzle_solved
 
     def get_ai_grid(self):
-        """Give the AI a grid with walls, a locked door, and dynamic blocks."""
+        """Give the AI a grid with walls, objects, and hazards blocked."""
         grid = get_grid(self.level_id)
 
         if not self.door_unlocked:
             row, column = self.door_position
+            grid[row][column] = 1
+
+        for row, column in get_static_blocked_cells(self.level_id):
             grid[row][column] = 1
 
         for row, column in self.dynamic_obstacles:

@@ -6,13 +6,13 @@ from game.levels import get_level
 
 
 TILE_SIZE = 16
-SCALE = 3
+SCALE = 2
 CELL_SIZE = TILE_SIZE * SCALE
 
-MAP_WIDTH = 9
-MAP_HEIGHT = 7
+MAP_WIDTH = 47
+MAP_HEIGHT = 25
 MARGIN_X = 24
-MAP_TOP = 84
+MAP_TOP = 70
 
 WINDOW_WIDTH = MARGIN_X * 2 + MAP_WIDTH * CELL_SIZE
 WINDOW_HEIGHT = MAP_TOP + MAP_HEIGHT * CELL_SIZE + 54
@@ -22,6 +22,7 @@ ASSET_DIR = (
     / "DungeonTileset_Free"
     / "DungeonTileset"
 )
+REFERENCE_IMAGE = Path(__file__).with_name("escape_room_reference_obstacles.png")
 
 
 def crop_tile(sheet, column, row):
@@ -119,18 +120,18 @@ def draw_level(screen, sprites, level_id):
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    reference = pygame.image.load(str(REFERENCE_IMAGE))
+    image_width, image_height = reference.get_size()
+    display = pygame.display.Info()
+    screen_width = max(320, min(1280, display.current_w - 80)) if display.current_w > 0 else 1280
+    screen_height = max(240, min(720, display.current_h - 120)) if display.current_h > 0 else 720
+    scale = min(0.8, screen_width / image_width, screen_height / image_height)
+    view_size = (int(image_width * scale), int(image_height * scale))
+    reference = pygame.transform.smoothscale(reference, view_size)
+    screen = pygame.display.set_mode(view_size)
+    reference = reference.convert()
     pygame.display.set_caption("Pixel Dungeon Escape Room")
 
-    try:
-        sprites = load_sprites()
-    except FileNotFoundError as error:
-        pygame.quit()
-        raise SystemExit(str(error))
-
-    title_font = pygame.font.Font(None, 30)
-    hint_font = pygame.font.Font(None, 21)
-    current_level = "ember_crypt"
     clock = pygame.time.Clock()
     running = True
 
@@ -138,26 +139,8 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1:
-                    current_level = "ember_crypt"
-                elif event.key == pygame.K_2:
-                    current_level = "lower_crypt"
 
-        screen.fill((24, 19, 37))
-
-        level = get_level(current_level)
-        title = title_font.render(level["name"], True, (235, 220, 190))
-        hint = hint_font.render(
-            "Press 1 or 2 to view a level. Close the window to exit.",
-            True,
-            (200, 190, 210),
-        )
-
-        screen.blit(title, (MARGIN_X, 18))
-        screen.blit(hint, (MARGIN_X, 52))
-
-        draw_level(screen, sprites, current_level)
+        screen.blit(reference, (0, 0))
 
         pygame.display.flip()
         clock.tick(30)
