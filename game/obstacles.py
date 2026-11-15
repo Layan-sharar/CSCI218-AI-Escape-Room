@@ -1,16 +1,35 @@
-
 import pygame
-import game.levels as levels
+import game.renderer as renderer
+
+# Spike cell for each level: a straight 1-wide corridor on the way to the key,
+# so the robot always crosses it in a straight line
+SPIKE_CELLS = {
+    "ember_crypt": (12, 17),
+    "lower_crypt": (16, 23),
+}
+
 # Spike location on the grid
-spike_row = 3
-spike_col = 6
+spike_row, spike_col = SPIKE_CELLS["ember_crypt"]
+
+
+def place_spikes(level_id):
+    """Move the spikes to a level's cell and restart their cycle."""
+    global spike_row, spike_col, frame_index, last_spike_time, sim_time
+    spike_row, spike_col = SPIKE_CELLS[level_id]
+    frame_index = 0
+    last_spike_time = 0
+    sim_time = 0
 
 # Animation sequence
 spike_sequence = [3, 4, 2, 1, 2, 4]
 frame_durations = [2000, 150, 150, 2000, 150, 150]
 
+# Simulation clock in ms, advanced by update_spikes(dt), so pausing the
+# simulation also pauses the spikes
+sim_time = 0
+
 frame_index = 0
-last_spike_time = pygame.time.get_ticks()
+last_spike_time = 0
 
 # Only frame 3 is fully retracted
 SAFE_FRAME = 3
@@ -19,10 +38,12 @@ SAFE_FRAME = 3
 SAFETY_MARGIN = 0.15
 
 
-def update_spikes():
-    global frame_index, last_spike_time
+def update_spikes(dt):
+    """Advance the spike cycle by dt seconds of simulation time."""
+    global frame_index, last_spike_time, sim_time
 
-    current_time = pygame.time.get_ticks()
+    sim_time += dt * 1000
+    current_time = sim_time
 
     # Handle elapsed animation frames
     while (
@@ -49,8 +70,7 @@ def get_remaining_safe_time():
     if get_spike_frame() != SAFE_FRAME:
         return 0.0
 
-    current_time = pygame.time.get_ticks()
-    elapsed = current_time - last_spike_time
+    elapsed = sim_time - last_spike_time
 
     remaining_ms = frame_durations[frame_index] - elapsed
 
@@ -59,14 +79,13 @@ def get_remaining_safe_time():
 
 def get_spike_rect():
     # Collision area matches the spike tile
-    x = round(spike_col * levels.cell_width)
-    y = round(spike_row * levels.cell_height)
+    x, y = renderer.grid_to_pixel(spike_row, spike_col)
 
     return pygame.Rect(
         x,
         y,
-        round(levels.cell_width),
-        round(levels.cell_height)
+        renderer.CELL_SIZE,
+        renderer.CELL_SIZE
     )
 
 
