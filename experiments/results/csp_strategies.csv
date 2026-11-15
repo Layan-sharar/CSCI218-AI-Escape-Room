@@ -1,0 +1,9 @@
+puzzle,strategy,repeats,solved,assignments,backtracks,runtime_ms_mean
+default,plain,5,True,21,16,0.0461
+default,mrv,5,True,9,4,0.0748
+default,forward_checking,5,True,10,5,0.0524
+default,mrv+forward_checking,5,True,5,0,0.0447
+impossible,plain,5,False,22,22,0.0405
+impossible,mrv,5,False,4,4,0.0436
+impossible,forward_checking,5,False,8,8,0.0365
+impossible,mrv+forward_checking,5,False,1,1,0.0218

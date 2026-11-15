@@ -64,7 +64,7 @@ class PuzzleView:
             text(f"{name} {'ON' if is_on else 'OFF'}", (x, 288))
 
         pygame.draw.rect(surface, (80, 190, 100) if self.door_open else (190, 70, 70), (480, 20, 120, 160))
-        text("DOOR OPEN" if self.door_open else "DOOR SEALED", (490, 190))
+        text("SWITCHES SET" if self.door_open else "PENDING", (490, 190))
 
         stats = self.result.stats
         if not self.result.solved:
