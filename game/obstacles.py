@@ -13,15 +13,23 @@ spike_row, spike_col = SPIKE_CELLS["ember_crypt"]
 
 
 def place_spikes(level_id):
-    global spike_row, spike_col
+    """Move the spikes to a level's cell and restart their cycle."""
+    global spike_row, spike_col, frame_index, last_spike_time, sim_time
     spike_row, spike_col = SPIKE_CELLS[level_id]
+    frame_index = 0
+    last_spike_time = 0
+    sim_time = 0
 
 # Animation sequence
 spike_sequence = [3, 4, 2, 1, 2, 4]
 frame_durations = [2000, 150, 150, 2000, 150, 150]
 
+# Simulation clock in ms, advanced by update_spikes(dt), so pausing the
+# simulation also pauses the spikes
+sim_time = 0
+
 frame_index = 0
-last_spike_time = pygame.time.get_ticks()
+last_spike_time = 0
 
 # Only frame 3 is fully retracted
 SAFE_FRAME = 3
@@ -30,10 +38,12 @@ SAFE_FRAME = 3
 SAFETY_MARGIN = 0.15
 
 
-def update_spikes():
-    global frame_index, last_spike_time
+def update_spikes(dt):
+    """Advance the spike cycle by dt seconds of simulation time."""
+    global frame_index, last_spike_time, sim_time
 
-    current_time = pygame.time.get_ticks()
+    sim_time += dt * 1000
+    current_time = sim_time
 
     # Handle elapsed animation frames
     while (
@@ -60,8 +70,7 @@ def get_remaining_safe_time():
     if get_spike_frame() != SAFE_FRAME:
         return 0.0
 
-    current_time = pygame.time.get_ticks()
-    elapsed = current_time - last_spike_time
+    elapsed = sim_time - last_spike_time
 
     remaining_ms = frame_durations[frame_index] - elapsed
 
