@@ -43,7 +43,7 @@ class Inspector:
                     path_length=result['path_length'], nodes_explored=result['nodes_explored'],
                     search_ms=result['runtime']*1000)
     def from_puzzle(self, result):
-        self.update(puzzle='Solution found' if result.solved else 'No solution',
+        self.update(puzzle='Solution found (not yet applied)' if result.solved else 'No solution',
                     puzzle_strategy=result.strategy,
                     puzzle_assignments=result.stats.assignments,
                     puzzle_backtracks=result.stats.backtracks)
@@ -54,7 +54,7 @@ class Inspector:
         out.append(('Behaviour Tree:',HEADING))
         for depth,name in enumerate(m.get('branch') or ['-']):
             out.append((f"{'  '*depth}> {name}",FG))
-        out.append(('Last A* search:',HEADING))
+        out.append(('Last navigation search:',HEADING))
         if 'path_found' in m:
             out.extend([(f"  {m['algorithm']}: {'route found' if m['path_found'] else 'NO ROUTE'}",GOOD if m['path_found'] else BAD),
                         (f"  Path length: {m['path_length']}",FG),
@@ -77,18 +77,54 @@ class Inspector:
             out.append((f"  [{e['step']}] {e['source']}: {e['message']}",FG))
         return out
     def draw(self, surface, rect):
+        """Wrap every text line within the inspector's available width."""
         if self._fonts is None:
             pygame.font.init()
-            self._fonts = pygame.font.Font(None,20)
-        surface.fill(BG,rect)
-        y = rect.top+10
-        for message,colour in self.lines():
-            if y > rect.bottom-18: break
-            # Clip long log entries to panel width, rather than overflowing into the game.
-            while message and self._fonts.size(message)[0] > rect.width-20:
-                message = message[:-1]
-            surface.blit(self._fonts.render(message,True,colour),(rect.left+10,y))
-            y+=18
+            self._fonts = pygame.font.Font(None, 20)
+        font = self._fonts
+        surface.fill(BG, rect)
+        left, right = rect.left + 10, rect.right - 10
+        y = rect.top + 10
+        line_height = font.get_linesize() + 2
+        headings = {"AI Inspector", "Behaviour Tree:", "Last navigation search:",
+                    "Puzzle:", "Agent:", "Recent actions:"}
+
+        def wrapped(message):
+            if not message:
+                return [""]
+            lines, current = [], ""
+            for word in message.split():
+                trial = (current + " " + word).strip()
+                if font.size(trial)[0] <= right - left:
+                    current = trial
+                    continue
+                if current:
+                    lines.append(current)
+                    current = ""
+                while word and font.size(word)[0] > right - left:
+                    n = len(word)
+                    while n > 1 and font.size(word[:n])[0] > right - left:
+                        n -= 1
+                    lines.append(word[:n])
+                    word = word[n:]
+                current = word
+            if current:
+                lines.append(current)
+            return lines or [""]
+
+        old_clip = surface.get_clip()
+        surface.set_clip(rect)
+        try:
+            for message, colour in self.lines():
+                if message in headings and y > rect.top + 10:
+                    y += 5
+                for part in wrapped(message):
+                    if y + line_height > rect.bottom - 8:
+                        return
+                    surface.blit(font.render(part, True, colour), (left, y))
+                    y += line_height
+        finally:
+            surface.set_clip(old_clip)
 
 if __name__ == '__main__':
     pygame.init()
