@@ -1,13 +1,16 @@
 
 import game.movement as movement
 
+# The robot starts on the level's start cell, (12, 23)
+movement.load_level("ember_crypt")
+
 # Save the original route
 original_route = movement.route.copy()
 
 # Test 1: Valid route
 valid_route = [
-    (3, 4),
-    (3, 5)
+    (12, 23),
+    (12, 24)
 ]
 
 result = movement.set_route(valid_route)
@@ -24,8 +27,8 @@ assert result is False
 
 # Test 3: Non-adjacent route
 invalid_route = [
-    (3, 4),
-    (3, 7)
+    (12, 23),
+    (12, 26)
 ]
 
 result = movement.set_route(invalid_route)
@@ -35,8 +38,8 @@ assert result is False
 
 # Test 4: Incorrect starting position
 invalid_start = [
-    (3, 5),
-    (3, 6)
+    (12, 24),
+    (12, 25)
 ]
 
 result = movement.set_route(invalid_start)

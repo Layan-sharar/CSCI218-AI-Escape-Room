@@ -1,28 +1,21 @@
 import pygame
 import game.levels as levels
 import game.obstacles as obstacles
+import game.renderer as renderer
 
-# Temporary route using (row, column)
-route = [
-    (3, 4),  # Start
-    (3, 5),  # Approach spikes
-    (3, 6),  # Cross spikes (1st time)
-    (3, 7),
-    (3, 6),  # Cross spikes (2nd time)
-    (3, 5),
-    (3, 6),  # Cross spikes (3rd time)
-    (3, 7),
-    (3, 6),  # Cross spikes (4th time)
-    (3, 5),
-    (3, 4)   # Return to start
-]
+# Static walkable grid of the loaded level: 0 = floor, 1 = wall or fixed prop.
+# Doors and changing obstacles are handled by the world rules, not here.
+grid = [[0]]
+
+# Route using (row, column); starts as just the level's start cell
+route = [(0, 0)]
 
 # Robot starting position
 robot_row, robot_col = route[0]
-robot_x, robot_y = levels.grid_to_pixel(robot_row, robot_col)
+robot_x, robot_y = renderer.grid_to_pixel(robot_row, robot_col)
 
 route_index = 1
-speed = 160  # Pixels per second
+speed = 2 * renderer.CELL_SIZE  # Pixels per second (2 tiles)
 
 # Animation settings
 frame_index = 0
@@ -36,6 +29,27 @@ current_animation = ("idle", "south")
 # Spike-crossing state
 crossing_spikes = False
 crossing_exit_index = None
+
+def load_level(level_id):
+    """Put the robot on a level's start cell with an empty route."""
+    global grid, route
+
+    blocked = levels.get_static_blocked_cells(level_id)
+    grid = [
+        [1 if cell or (row, col) in blocked else 0 for col, cell in enumerate(cells)]
+        for row, cells in enumerate(levels.get_grid(level_id))
+    ]
+    route = [tuple(levels.get_level(level_id)["start"])]
+    reset_movement()
+
+
+def is_walkable(row, col):
+    """Check whether a grid cell is inside the map and walkable."""
+    if 0 <= row < len(grid) and 0 <= col < len(grid[row]):
+        return grid[row][col] == 0
+
+    return False
+
 
 def set_route(new_route):
     """
@@ -72,7 +86,7 @@ def set_route(new_route):
         if (
             not isinstance(row, int)
             or not isinstance(col, int)
-            or not levels.is_walkable(row, col)
+            or not is_walkable(row, col)
         ):
             return False
 
@@ -91,7 +105,7 @@ def set_route(new_route):
         return False
 
     # Don't replace the route while between grid cells
-    current_x, current_y = levels.grid_to_pixel(
+    current_x, current_y = renderer.grid_to_pixel(
         robot_row, robot_col
     )
 
@@ -116,8 +130,8 @@ def robot_rect_at(x, y):
     return pygame.Rect(
         round(x),
         round(y),
-        levels.robot_width,
-        levels.robot_height
+        renderer.CELL_SIZE,
+        renderer.CELL_SIZE
     )
 
 
@@ -154,10 +168,10 @@ def get_safe_crossing_plan():
         if (row - previous_row, col - previous_col) != (dr, dc):
             return None
 
-        if not levels.is_walkable(row, col):
+        if not is_walkable(row, col):
             return None
 
-        x, y = levels.grid_to_pixel(row, col)
+        x, y = renderer.grid_to_pixel(row, col)
 
         total_distance += pygame.Vector2(
             x - previous_x,
@@ -187,7 +201,7 @@ def is_next_crossing_blocked():
 
     target_row, target_col = route[route_index]
 
-    target_x, target_y = levels.grid_to_pixel(
+    target_x, target_y = renderer.grid_to_pixel(
         target_row, target_col
     )
 
@@ -237,10 +251,10 @@ def move_towards_target(dt):
         return
 
     # Prevent walking into walls
-    if not levels.is_walkable(target_row, target_col):
+    if not is_walkable(target_row, target_col):
         return
 
-    target_x, target_y = levels.grid_to_pixel(
+    target_x, target_y = renderer.grid_to_pixel(
         target_row, target_col
     )
 
@@ -346,7 +360,7 @@ def reset_movement():
     global current_animation, last_frame_time
 
     robot_row, robot_col = route[0]
-    robot_x, robot_y = levels.grid_to_pixel(robot_row, robot_col)
+    robot_x, robot_y = renderer.grid_to_pixel(robot_row, robot_col)
 
     route_index = 1
     crossing_spikes = False
@@ -357,31 +371,3 @@ def reset_movement():
     frame_index = 0
     current_animation = ("idle", "south")
     last_frame_time = pygame.time.get_ticks()
-
-
-# ---- Person D: world move rule ----
-
-def move_player(state, new_position):
-    """Move one tile if the destination is inside the map and unblocked."""
-    current_row, current_column = state.player_position
-    new_row, new_column = new_position
-
-    # Only allow a move to one neighboring tile.
-    distance = abs(new_row - current_row) + abs(new_column - current_column)
-    if distance != 1:
-        return False
-
-    grid = state.get_ai_grid()
-
-    # Reject positions outside the map.
-    if new_row < 0 or new_row >= len(grid):
-        return False
-    if new_column < 0 or new_column >= len(grid[new_row]):
-        return False
-
-    # 1 means blocked: a wall or a locked door.
-    if grid[new_row][new_column] == 1:
-        return False
-
-    state.player_position = (new_row, new_column)
-    return True

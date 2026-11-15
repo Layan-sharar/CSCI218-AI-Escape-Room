@@ -14,8 +14,9 @@ import csv
 import statistics
 from pathlib import Path
 
-import game.levels as levels
 from ai.navigation import find_path
+from game.levels import LEVELS
+from game.state import WorldState
 from puzzles.switch_puzzle import compare_strategies, default_puzzle, impossible_puzzle
 
 RESULTS_DIR = Path(__file__).parent / "results"
@@ -50,9 +51,22 @@ WALL_GRID = _grid([
     "..........",
 ])
 
+def _level_trips(level_id):
+    """The three trips of a real run: to the key (door locked), then to the puzzle and exit (door open)."""
+    world = WorldState(level_id)
+    locked = world.get_ai_grid()
+    world.door_unlocked = True
+    unlocked = world.get_ai_grid()
+    return {
+        f"{level_id}_to_key": (locked, world.start_position, world.key_position, None),
+        f"{level_id}_to_puzzle": (unlocked, world.key_position, world.puzzle_position, None),
+        f"{level_id}_to_exit": (unlocked, world.puzzle_position, world.exit_position, None),
+    }
+
+
 # name: (grid, start, goal, extra blocked cells)
 SCENARIOS = {
-    "test_room": (levels.test_grid, (2, 1), (7, 8), None),
+    **{name: trip for level_id in LEVELS for name, trip in _level_trips(level_id).items()},
     "open_10x10": ([[0] * 10 for _ in range(10)], (0, 0), (9, 9), None),
     # Corner to corner every cell between start and goal ties on f = g + h, so A* can't prune.
     "open_30x30_corner": ([[0] * 30 for _ in range(30)], (0, 0), (29, 29), None),

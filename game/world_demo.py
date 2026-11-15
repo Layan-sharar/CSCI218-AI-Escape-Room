@@ -4,9 +4,9 @@ from game.interactions import (
     collect_key,
     complete_level,
     complete_puzzle,
+    move_player,
     unlock_door,
 )
-from game.movement import move_player
 from game.state import WorldState
 
 

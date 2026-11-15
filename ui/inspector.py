@@ -138,64 +138,70 @@ class Inspector:
 
 
 def run_demo():
-    """Tiny sample run: the real Behaviour Tree, A* and CSP on the test grid, drawn with shapes."""
-    import game.levels as levels
+    """Sample run on Person D's level with the real Behaviour Tree, A* and CSP, drawn with shapes."""
+    import game.interactions as interactions
     from ai.agent_controller import AgentController
     from ai.navigation import find_path
+    from game.state import WorldState
     from puzzles.switch_puzzle import solve_puzzle
     from ui.playback_controls import Playback
 
-    tile = 48
-    grid = levels.test_grid
-    map_w, map_h = len(grid[0]) * tile, len(grid) * tile
-    panel = pygame.Rect(map_w, 0, Inspector.WIDTH, max(map_h, 600))
+    tile = 16
+    world = WorldState("ember_crypt")
+    rows, cols = len(world.get_ai_grid()), len(world.get_ai_grid()[0])
+    map_w, map_h = cols * tile, rows * tile
+    panel = pygame.Rect(map_w, 0, Inspector.WIDTH, max(map_h + 60, 600))
     controls = pygame.Rect(0, map_h, map_w, 60)
 
     pygame.init()
-    screen = pygame.display.set_mode((panel.right, max(panel.bottom, controls.bottom)))
+    screen = pygame.display.set_mode((panel.right, panel.bottom))
     pygame.display.set_caption("AI Inspector demo")
     inspector = Inspector()
+    state = {}
+    agent = AgentController(state)
     sim = {}
 
     def reset():
-        sim["state"] = {
-            "has_key": False, "puzzle_solved": False, "exit_open": False,
-            "level_complete": False, "spikes_blocking": False,
-            "key_position": (2, 4), "puzzle_position": (5, 6), "exit_position": (7, 8),
-        }
-        sim.update(agent=AgentController(sim["state"]), pos=(3, 1), moves=0, goal=None)
+        world.reset()
+        sim.update(moves=0, goal=None)
         inspector.reset()
 
     def tick():
-        """One simulation step: decide, plan, move one tile, apply what was reached."""
-        state, agent = sim["state"], sim["agent"]
+        """One simulation step: decide, plan, move one tile, apply the world rules."""
+        state.update(
+            has_key=world.has_key, puzzle_solved=world.puzzle_solved, exit_open=world.exit_open,
+            level_complete=world.level_complete, spikes_blocking=False,
+            key_position=world.key_position, puzzle_position=world.puzzle_position,
+            exit_position=world.exit_position,
+        )
         decision = agent.update()
         inspector.from_decision(decision, agent.tree)
         if decision["goal"] != sim["goal"]:
             sim["goal"] = decision["goal"]
             inspector.record(sim["moves"], "BT", f"New goal {decision['goal']}")
         if decision["target"]:
-            result = find_path(grid, sim["pos"], decision["target"])
+            grid = world.get_ai_grid()
+            if world.has_key:  # the door unlocks when reached, so plan through it
+                grid[world.door_position[0]][world.door_position[1]] = 0
+            result = find_path(grid, world.player_position, decision["target"])
             inspector.from_path(result)
-            if result["found"] and len(result["path"]) > 1:
-                sim["pos"] = result["path"][1]
+            if result["found"] and len(result["path"]) > 1 and interactions.move_player(world, result["path"][1]):
                 sim["moves"] += 1
-        pos = sim["pos"]
-        if pos == state["key_position"] and not state["has_key"]:
-            state["has_key"] = True
+        if interactions.collect_key(world):
             inspector.record(sim["moves"], "World", "Picked up key")
-        elif pos == state["puzzle_position"] and state["has_key"] and not state["puzzle_solved"]:
+        if interactions.unlock_door(world):
+            inspector.record(sim["moves"], "World", "Unlocked door")
+        if world.player_position == world.puzzle_position and not world.puzzle_solved:
             result = solve_puzzle()
             inspector.from_puzzle(result)
-            state["puzzle_solved"] = state["exit_open"] = result.solved
-            inspector.record(sim["moves"], "CSP", "Switches set, exit open")
-        elif pos == state["exit_position"] and state["exit_open"] and not state["level_complete"]:
-            state["level_complete"] = True
+            if interactions.complete_puzzle(world, result.solved):
+                inspector.record(sim["moves"], "CSP", "Switches set, exit open")
+        if interactions.complete_level(world):
             inspector.record(sim["moves"], "World", "Reached the exit")
-        inspector.update(keys=f"{int(state['has_key'])}/1", position=pos, step=sim["moves"])
+        inspector.update(keys=f"{int(world.has_key)}/1", position=world.player_position, step=sim["moves"])
 
     reset()
-    playback = Playback(on_reset=reset)
+    playback = Playback(on_reset=reset, step_dt=0.1)
     clock = pygame.time.Clock()
     elapsed = 0.0
     running = True
@@ -212,17 +218,17 @@ def run_demo():
             tick()
 
         screen.fill((0, 0, 0))
-        for r, row in enumerate(grid):
+        for r, row in enumerate(world.get_ai_grid()):
             for c, cell in enumerate(row):
                 pygame.draw.rect(screen, (60, 60, 70) if cell else (110, 100, 90), (c * tile, r * tile, tile - 1, tile - 1))
-        state = sim["state"]
-        for pos, colour, show in ((state["key_position"], (240, 200, 60), not state["has_key"]),
-                                  (state["puzzle_position"], (170, 90, 230), not state["puzzle_solved"]),
-                                  (state["exit_position"], GOOD if state["exit_open"] else BAD, True)):
+        for pos, colour, show in ((world.key_position, (240, 200, 60), not world.has_key),
+                                  (world.door_position, (150, 90, 40), not world.door_unlocked),
+                                  (world.puzzle_position, (170, 90, 230), not world.puzzle_solved),
+                                  (world.exit_position, GOOD if world.exit_open else BAD, True)):
             if show:
-                pygame.draw.rect(screen, colour, (pos[1] * tile + 10, pos[0] * tile + 10, tile - 20, tile - 20))
-        r, c = sim["pos"]
-        pygame.draw.circle(screen, (80, 160, 255), (c * tile + tile // 2, r * tile + tile // 2), tile // 3)
+                pygame.draw.rect(screen, colour, (pos[1] * tile + 2, pos[0] * tile + 2, tile - 4, tile - 4))
+        r, c = world.player_position
+        pygame.draw.circle(screen, (80, 160, 255), (c * tile + tile // 2, r * tile + tile // 2), tile // 2 - 1)
         inspector.draw(screen, panel)
         playback.draw(screen, controls)
         pygame.display.flip()
