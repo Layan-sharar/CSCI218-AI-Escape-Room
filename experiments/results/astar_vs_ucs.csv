@@ -1,0 +1,17 @@
+scenario,algorithm,repeats,found,path_length,cost,nodes_explored,runtime_ms_mean,runtime_ms_min
+open_10x10,A*,5,True,18,18,100,0.2714,0.2302
+open_10x10,UCS,5,True,18,18,100,0.2268,0.2225
+open_30x30_corner,A*,5,True,58,58,900,2.2518,2.0619
+open_30x30_corner,UCS,5,True,58,58,900,2.1036,1.9811
+open_30x30_straight,A*,5,True,29,29,30,0.1102,0.0997
+open_30x30_straight,UCS,5,True,29,29,675,1.6459,1.5687
+wall_detour,A*,5,True,17,17,62,0.1498,0.1446
+wall_detour,UCS,5,True,17,17,91,0.2004,0.1971
+direct_route,A*,5,True,9,9,10,0.0265,0.0251
+direct_route,UCS,5,True,9,9,50,0.1191,0.1143
+replan_after_block,A*,5,True,27,27,91,0.2884,0.209
+replan_after_block,UCS,5,True,27,27,91,0.3754,0.35
+serpentine_15x15,A*,5,True,126,126,127,0.3745,0.2867
+serpentine_15x15,UCS,5,True,126,126,127,0.47,0.4252
+no_route,A*,5,False,0,,6,0.0279,0.0244
+no_route,UCS,5,False,0,,6,0.028,0.0246

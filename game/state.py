@@ -44,4 +44,8 @@ class WorldState:
         for row, column in self.dynamic_obstacles:
             grid[row][column] = 1
 
+ person-d-world-rules
         return grid
+
+        return grid
+main
