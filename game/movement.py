@@ -1,3 +1,11 @@
+ person-d-world-rules
+def move_player(state, new_position):
+    """Move one tile if the destination is inside the map and unblocked."""
+    current_row, current_column = state.player_position
+    new_row, new_column = new_position
+
+    # Only allow a move to one neighboring tile.
+
 """Autonomous robot movement for Member D's dungeon and WorldState.
 
 A* supplies a route; the robot follows it automatically. No keyboard movement.
@@ -16,20 +24,33 @@ def move_player(state, new_position):
     current_row, current_column = state.player_position
     new_row, new_column = new_position
 
+ main
     distance = abs(new_row - current_row) + abs(new_column - current_column)
     if distance != 1:
         return False
 
     grid = state.get_ai_grid()
 
+ person-d-world-rules
+    # Reject positions outside the map.
+
+ main
     if new_row < 0 or new_row >= len(grid):
         return False
     if new_column < 0 or new_column >= len(grid[new_row]):
         return False
+ person-d-world-rules
+
+    # 1 means blocked: a wall or a locked door.
+
+ main
     if grid[new_row][new_column] == 1:
         return False
 
     state.player_position = (new_row, new_column)
+ person-d-world-rules
+    return True
+
     return True
 
 
@@ -206,3 +227,4 @@ class RobotMovement:
         elif now - self.last_frame_time >= self.animation_delay:
             self.frame_index = (self.frame_index + 1) % frame_count
             self.last_frame_time = now
+ main

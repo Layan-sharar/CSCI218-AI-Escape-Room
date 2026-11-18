@@ -1,3 +1,12 @@
+ person-d-world-rules
+from game.levels import get_grid
+
+
+def set_dynamic_obstacle(state, position, blocked=True):
+    """Block or unblock a floor cell for a changing obstacle."""
+    grid = get_grid(state.level_id)
+
+
 """Timed spike hazards and dynamic obstacle management for RogueMind.
 
 Spike timing is driven by simulation dt, so pause/step/speed affect hazards
@@ -59,21 +68,37 @@ def can_cross_spikes(required_time):
 
 def set_dynamic_obstacle(state, position, blocked=True):
     grid = get_grid(state.level_id)
+ main
     try:
         row, column = position
     except (TypeError, ValueError):
         return False
+ person-d-world-rules
+
     if not isinstance(row, int) or not isinstance(column, int):
         return False
+
+    # Only allow positions inside the map that are floor tiles.
+
+    if not isinstance(row, int) or not isinstance(column, int):
+        return False
+ main
     if row < 0 or row >= len(grid):
         return False
     if column < 0 or column >= len(grid[row]):
         return False
     if grid[row][column] != 0:
         return False
+ person-d-world-rules
+
+ main
     cell = (row, column)
     if blocked:
         state.dynamic_obstacles.add(cell)
     else:
         state.dynamic_obstacles.discard(cell)
+ person-d-world-rules
+
+
+ main
     return True
