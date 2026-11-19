@@ -1,27 +1,35 @@
 
+import pytest
+
 from ai.agent_controller import AgentController
 from ai.behavior_tree import Status
-
-# Temporary game state for testing
-game_state = {
-    "has_key": False,
-    "puzzle_solved": False,
-    "exit_open": False,
-    "level_complete": False,
-    "spikes_blocking": False,
-    "key_position": (2, 4),
-    "puzzle_position": (5, 6),
-    "exit_position": (7, 8)
-}
-
-agent = AgentController(game_state)
+from game.state import WorldState
 
 
-def check_scenario(number, expected_goal, expected_status):
+class FakeMovement:
+    """Simulate whether the robot's next spike crossing is unsafe."""
+
+    def __init__(self):
+        self.spikes_blocking = False
+
+    def is_next_crossing_blocked(self):
+        return self.spikes_blocking
+
+
+@pytest.fixture
+def setup_agent():
+    """Create a fresh game state and controller for each test."""
+    state = WorldState("ember_crypt")
+    movement = FakeMovement()
+    agent = AgentController(state, movement)
+
+    return state, movement, agent
+
+
+def check_scenario(agent, expected_goal, expected_status):
     result = agent.update()
 
-    print(f"\nScenario {number}")
-    print(f"Expected goal: {expected_goal}")
+    print(f"\nExpected goal: {expected_goal}")
     print(f"Actual goal:   {result['goal']}")
     print(f"Status:        {result['status'].name}")
     print(f"Reason:        {result['reason']}")
@@ -29,33 +37,72 @@ def check_scenario(number, expected_goal, expected_status):
     assert result["goal"] == expected_goal
     assert result["status"] == expected_status
 
-    print("PASSED")
-
 
 # Scenario 1: Robot needs a key
-check_scenario(1, "FIND_KEY", Status.SUCCESS)
+def test_find_key(setup_agent):
+    state, movement, agent = setup_agent
 
-# Scenario 2: Robot has key, but puzzle is unsolved
-game_state["has_key"] = True
-check_scenario(2, "SOLVE_PUZZLE", Status.SUCCESS)
+    state.has_key = False
 
-# Scenario 3: Puzzle solved and exit is open
-game_state["puzzle_solved"] = True
-game_state["exit_open"] = True
-check_scenario(3, "REACH_EXIT", Status.SUCCESS)
+    check_scenario(agent, "FIND_KEY", Status.SUCCESS)
+
+
+# Scenario 2: Robot has key but door is locked
+def test_unlock_door(setup_agent):
+    state, movement, agent = setup_agent
+
+    state.has_key = True
+    state.door_unlocked = False
+
+    check_scenario(agent, "UNLOCK_DOOR", Status.SUCCESS)
+
+
+# Scenario 3: Door unlocked but puzzle is unsolved
+def test_solve_puzzle(setup_agent):
+    state, movement, agent = setup_agent
+
+    state.has_key = True
+    state.door_unlocked = True
+    state.puzzle_solved = False
+
+    check_scenario(agent, "SOLVE_PUZZLE", Status.SUCCESS)
+
 
 # Scenario 4: Spikes block the robot's route
-game_state["spikes_blocking"] = True
-check_scenario(4, "WAIT_FOR_SPIKES", Status.RUNNING)
+def test_wait_for_spikes(setup_agent):
+    state, movement, agent = setup_agent
 
-# Scenario 5: Robot completes the level
-game_state["level_complete"] = True
-check_scenario(5, "LEVEL_COMPLETE", Status.SUCCESS)
+    movement.spikes_blocking = True
 
-# Scenario 6: No valid objective is available
-game_state["level_complete"] = False
-game_state["spikes_blocking"] = False
-game_state["exit_open"] = False
-check_scenario(6, "NO_AVAILABLE_GOAL", Status.FAILURE)
+    check_scenario(agent, "WAIT_FOR_SPIKES", Status.RUNNING)
 
-print("\nAll 6 Behavior Tree scenarios passed!")
+
+# Scenario 5: Puzzle solved and exit is open
+def test_reach_exit(setup_agent):
+    state, movement, agent = setup_agent
+
+    state.has_key = True
+    state.door_unlocked = True
+    state.puzzle_solved = True
+    state.level_complete = False
+
+    check_scenario(agent, "REACH_EXIT", Status.SUCCESS)
+
+
+# Scenario 6: Robot completes the level
+def test_level_complete(setup_agent):
+    state, movement, agent = setup_agent
+
+    state.level_complete = True
+
+    check_scenario(agent, "LEVEL_COMPLETE", Status.SUCCESS)
+
+
+# Scenario 7: Test the fallback action directly
+def test_no_available_goal(setup_agent):
+    state, movement, agent = setup_agent
+
+    result = agent.no_available_goal()
+
+    assert result == Status.FAILURE
+    assert agent.current_goal == "NO_AVAILABLE_GOAL"

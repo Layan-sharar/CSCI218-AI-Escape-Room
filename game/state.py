@@ -1,8 +1,9 @@
+
 from game.levels import get_grid, get_level, get_static_blocked_cells
 
 
 class WorldState:
-    """Track the player's progress through one level."""
+    """Track the agent's progress through one level."""
 
     def __init__(self, level_id):
         self.level_id = level_id
@@ -31,7 +32,7 @@ class WorldState:
         return self.door_unlocked and self.puzzle_solved
 
     def get_ai_grid(self):
-        """Give the AI a grid with walls, objects, and hazards blocked."""
+        """Give the AI a grid with walls and obstacles blocked."""
         grid = get_grid(self.level_id)
 
         if not self.door_unlocked:
