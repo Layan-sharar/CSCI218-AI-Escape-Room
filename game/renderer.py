@@ -1,10 +1,4 @@
-"""Asset-only visual renderer for the team's original RogueMind level data.
 
-All world layouts and collision rules remain in game.levels / game.state.
-This module does not read or display the reference PNG. Every dungeon image
-is cropped from the supplied 2D Pixel Dungeon Asset Pack v2.0 or loaded from
-its animation files. Coordinates are the original (row, column) 47x25 grid.
-"""
 from pathlib import Path
 
 import pygame
@@ -133,11 +127,7 @@ def _anim(frames, tick_ms, step_ms=220):
 
 
 def _draw_background(screen, sprites, level):
-    """Asset-based open room floors and masonry borders.
-
-    Tiles follow the *same grid* used by WorldState/A*. The large empty blocks
-    between rooms become shadowed void rather than an artificial brick maze.
-    """
+    """Draw the dungeon floor and walls"""
     grid = level["grid"]
     tiles = sprites["tile"]
     for row, values in enumerate(grid):
@@ -389,11 +379,6 @@ def _draw_objectives(screen, sprites, level, state, tick_ms):
 
 def draw_level(screen, sprites, level_id, state=None, tick_ms=None,
                puzzle_result=None, puzzle_started_at=None):
-    """Paint the real 47x25 dungeon from level data, never a reference image.
-
-    Includes all spike_traps, water_tiles, stepping_stones, pressure_plates,
-    permanent props, animated torches, key, door, puzzle and exit.
-    """
     from game import obstacles
 
     level = get_level(level_id)

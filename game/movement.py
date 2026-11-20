@@ -1,8 +1,4 @@
-"""Autonomous robot movement for Member D's dungeon and WorldState.
 
-A* supplies a route; the robot follows it automatically. No keyboard movement.
-The caller updates spikes once per frame and calls robot.update(dt).
-"""
 
 import pygame
 
@@ -12,7 +8,6 @@ from game.renderer import CELL_SIZE, MARGIN_X, MAP_TOP
 
 
 def move_player(state, new_position):
-    """Member D's original logical movement and collision check (unchanged)."""
     current_row, current_column = state.player_position
     new_row, new_column = new_position
 
@@ -62,11 +57,6 @@ class RobotMovement:
         self.crossing_exit_index = None
 
     def _navigation_grid(self):
-        """Use WorldState collision rules; spike tiles are time-gated, not walls.
-
-        IMPORTANT: levels.py must exclude 'spike_traps' from STATIC_BLOCKING_FIELDS,
-        so move_player() also accepts a safe spike tile.
-        """
         return self.state.get_ai_grid()
 
     def set_route(self, new_route):
@@ -98,15 +88,8 @@ class RobotMovement:
         return True
 
     def _crossing_plan(self):
-        """Calculate safe time to pass all consecutive spikes, even around corners.
+        #Calculate safe time to pass all consecutive spikes, even around corners.
 
-        The original implementation rejected a turn *inside* the crossing.
-        If A* picked a spike at a corner, the Behavior Tree would wait forever
-        because no animation frame could make that geometric route "straight".
-        Here we sum the actual orthogonal waypoint distances until the first
-        non-spike tile (fully clear of the hazard). The existing safe-window
-        timing and safety margin are still enforced by can_cross_spikes().
-        """
         if self.route_index >= len(self.route):
             return None
 
@@ -175,7 +158,6 @@ class RobotMovement:
             self.direction = ('east' if offset.x > 0 else 'west') if abs(offset.x) > abs(offset.y) else ('south' if offset.y > 0 else 'north')
         step = self.speed * dt
         if distance <= step:
-            # Validate with Member D's unchanged move_player before updating
             # the visual position; never let the sprite and WorldState diverge.
             if not move_player(self.state, target):
                 self.crossing_spikes = False

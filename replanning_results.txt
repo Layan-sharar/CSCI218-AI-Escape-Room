@@ -1,0 +1,23 @@
+==============================================================
+ROGUEMIND  |  A* DYNAMIC OBSTACLE REPLANNING TEST
+==============================================================
+Level:                 ember_crypt
+Start:                 (12, 23)
+Goal (key):            (4, 4)
+New blocked cell:      (12, 22)
+--------------------------------------------------------------
+Original route found:  True
+Original path length:  27 moves
+Original nodes:        72
+Original first step:   (12, 22)
+--------------------------------------------------------------
+New route found:       True
+New path length:       29 moves
+New nodes:             79
+New first step:        (11, 23)
+Blocked cell avoided:  True
+New route valid:       True
+--------------------------------------------------------------
+PASS: A* recalculated a valid route around the new obstacle.
+NOTE: Controlled pathfinding test; not a live gameplay capture.
+==============================================================

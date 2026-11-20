@@ -1,20 +1,13 @@
-"""Navigation interface for the ROGUEMIND game.
+#Navigation interface for the ROGUEMIND game.
 
-Other project modules should call find_path() from this file rather than
-depending on the internal details of the A* implementation.
-"""
+
 
 from ai.astar import astar_search
 
 
 def find_path(grid, start, goal, blocked_cells=None,
               use_heuristic=True):
-    """Calculate a route and return the route plus search statistics.
-
-    The returned dictionary can be passed to Person E's inspector. The
-    value in result["path"] is directly compatible with movement.set_route().
-    Replanning uses the same function with the latest grid and blocked cells.
-    """
+    #Calculate a route and return the route plus search statistics.
     return astar_search(
         grid,
         start,

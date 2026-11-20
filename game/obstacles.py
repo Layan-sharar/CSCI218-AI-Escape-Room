@@ -1,7 +1,7 @@
 """Timed spike hazards and dynamic obstacle management for RogueMind.
 
 Spike timing is driven by simulation dt, so pause/step/speed affect hazards
-and robot movement consistently. Call update_spikes(sim_dt) once per frame.
+and robot movement consistently. 
 """
 import pygame
 from game.levels import get_grid, get_level

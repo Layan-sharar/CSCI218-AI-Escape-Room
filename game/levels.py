@@ -1,6 +1,3 @@
-# Reference-inspired RogueMind level layout.
-# This version keeps the same world-state fields and AI expectations,
-# but replaces the loose maze with a fixed, room-based dungeon layout.
 
 GRID_ROWS = 25
 GRID_COLUMNS = 47
@@ -62,7 +59,6 @@ def _add_inner_wall(grid, top, bottom, left, right):
 
 
 def _make_reference_grid(level_variant=1):
-    """Build a fixed room layout close to the reference image."""
     grid = _wall_grid()
 
     # Open all main chambers.
